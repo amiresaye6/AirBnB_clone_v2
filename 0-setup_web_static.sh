@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# web stack auto deployment on servers
 # Install Nginx if not installed
 if ! command -v nginx &> /dev/null; then
     echo "Nginx is not installed. Proceeding with installation..."
