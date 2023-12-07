@@ -1,14 +1,53 @@
 #!/usr/bin/env bash
-# setup server for deployment web_static
-apt-get update -y
-apt-get upgrade -y
-apt-get install nginx -y
-mkdir -p /data/web_static
-mkdir -p /data/web_static/releases
-mkdir -p /data/web_static/shared
-mkdir -p /data/web_static/releases/test
-echo "test deploying web_static" > /data/web_static/releases/test/index.html
-ln -fs /data/web_static/releases/test /data/web_static/current
-chown -R ubuntu:ubuntu /data
-sed -i '/^\tserver_name/ a\\tlocation /hbnb_static \{\n\t\talias /data/web_static/current;\n\t\}\n' /etc/nginx/sites-available/default
-service nginx restart
+# web stack auto deployment on servers
+# Install Nginx if not installed
+if ! command -v nginx &> /dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y nginx
+    sudo service nginx start
+    sudo ufw allow 'Nginx HTTP'
+    sudo chown -R "$USER":"$USER" /var/www/html
+    sudo chmod -R 755 /var/www
+    cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.html.bckp
+    echo -e "Hello World! from /var/www/html" | dd status=none of=/var/www/html/index.nginx-debian.html
+fi
+
+# Create necessary directory structure if not already existing
+sudo mkdir -p "/data/web_static/releases/test/"
+sudo mkdir -p "/data/web_static/shared/"
+sudo chown -R ubuntu:ubuntu /data/
+
+# Create a fake HTML file /data/web_static/releases/test/index.html
+echo -e "Hello World! from /data/web_static/releases/test/" | sudo dd status=none of=/data/web_static/releases/test/index.html
+
+# Remove and recreate the symbolic link
+if [ -L "/data/web_static/current" ]; then
+    sudo rm "/data/web_static/current"
+fi
+sudo ln -s "/data/web_static/releases/test/" "/data/web_static/current"
+
+# Update the Nginx configuration
+sudo printf '%s' 'server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    add_header X-Served-By $HOSTNAME;
+    root   /var/www/html;
+    index  index.html index.htm;
+
+    location /redirect_me {
+        return 301 https://google.com/;
+    }
+
+    location /hbnb_static {
+        alias /data/web_static/current/;
+    }
+
+    error_page 404 /404.html;
+    location /404 {
+        root /var/www/html;
+        internal;
+    }
+}' | sudo tee /etc/nginx/sites-available/default >/dev/null
+
+# Restart Nginx
+sudo service nginx restart
