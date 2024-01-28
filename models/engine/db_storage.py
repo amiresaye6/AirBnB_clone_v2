@@ -13,6 +13,7 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.session import sessionmaker, Session
 from os import getenv
 
+
 class DBStorage:
     """DB Engine"""
     __engine = None
@@ -22,7 +23,7 @@ class DBStorage:
         """init function"""
         uri = 'mysql+mysqldb://{}:{}@localhost:3306/{}'.format(
               getenv("HBNB_MYSQL_USER"), getenv("HBNB_MYSQL_PWD"),
-	      getenv("HBNB_MYSQL_HOST"), getenv("HBNB_MYSQL_DB"))
+          getenv("HBNB_MYSQL_HOST"), getenv("HBNB_MYSQL_DB"))
         self.__engine = create_engine(uri, pool_pre_ping=True)
 
         if getenv("HBNB_ENV") == "test":
@@ -38,7 +39,7 @@ class DBStorage:
                 if key != "BaseModel":
                     value = HBNBCommand.classes[key]
                 for r in self.__session.query(value).all():
-                  classdictionary.update({'{}.{}'.format(key, r.id): r})
+                    classdictionary.update({'{}.{}'.format(key, r.id): r})
             return classdictionary
         else:
             if cls is not BaseModel:
