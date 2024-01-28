@@ -37,7 +37,7 @@ class DBStorage:
             for key in HBNBCommand.classes:
                 if key != "BaseModel":
                     value = HBNBCommand.classes[key]
-                for r in self.__session.query(val).all():
+                for r in self.__session.query(value).all():
                   classdictionary.update({'{}.{}'.format(key, r.id): r})
             return classdictionary
         else:
@@ -73,3 +73,10 @@ class DBStorage:
         sess = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Sess = scoped_session(sess)
         self.__session = Sess()
+
+    def close(self):
+        """
+        method on the private session attribute (self.__session) tips or
+        close() on the class Session
+        """
+        self.__session.remove()
